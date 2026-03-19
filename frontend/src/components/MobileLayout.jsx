@@ -22,7 +22,7 @@ const MobileLayout = () => {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white w-full max-w-md mx-auto border-x border-[#1c1c1e]">
+    <div className="flex flex-col h-screen bg-black text-white w-full md:max-w-2xl lg:max-w-4xl mx-auto border-x border-[#1c1c1e] shadow-2xl relative">
       
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto hide-scrollbar z-0 relative pb-20">
@@ -30,7 +30,7 @@ const MobileLayout = () => {
       </div>
 
       {/* Bottom Navigation Bar */}
-      <div className="fixed bottom-0 w-full max-w-md h-[83px] bg-[#0c0c0d]/90 backdrop-blur-md border-t border-[#1c1c1e] flex justify-around items-start pt-3 pb-8 z-50">
+      <div className="fixed bottom-0 w-full md:max-w-2xl lg:max-w-4xl h-[83px] bg-[#0c0c0d]/90 backdrop-blur-md border-t border-[#1c1c1e] flex justify-around items-start pt-3 pb-8 z-50 transition-all">
         {tabs.map((tab) => {
           const isActive = location.pathname.includes(tab.path);
           const Icon = tab.icon;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Video, Phone, Plus, Camera, Mic, IndianRupee, Smile } from 'lucide-react';
+import { ChevronLeft, Video, Phone, Plus, Camera, Mic, IndianRupee, Smile, Image as ImageIcon, FileText, MapPin, UserSquare2, Headphones } from 'lucide-react';
 import { useStore } from '../store';
 import axios from 'axios';
 import { io } from 'socket.io-client';
@@ -15,6 +15,7 @@ const ChatWindowPage = () => {
   const [newMessage, setNewMessage] = useState('');
   const [socketConnected, setSocketConnected] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   
@@ -49,11 +50,11 @@ const ChatWindowPage = () => {
         setMessages([...useStore.getState().messages, newMessageReceived]);
       }
     };
-    if (socket) socket.on('message recieved', messageHandler);
+    if (socketConnected && socket) socket.on('message recieved', messageHandler);
     return () => {
       if (socket) socket.off('message recieved', messageHandler);
     };
-  }, [id]);
+  }, [id, socketConnected]); // Essential fix: Socket triggers now bind exclusively after initialization
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -63,6 +64,8 @@ const ChatWindowPage = () => {
     if ((e && e.key === 'Enter') || (e && e.type === 'click') || customPayload) {
       if (e && e.type === 'keydown') e.preventDefault();
       if (!newMessage.trim() && !customPayload) return;
+      
+      setShowAttachMenu(false);
       
       try {
         const config = { headers: { 'Content-type': 'application/json', Authorization: `Bearer ${user.token}` } };
@@ -79,6 +82,7 @@ const ChatWindowPage = () => {
 
   const handleMediaUpload = (file) => {
     setUploadingMedia(true);
+    setShowAttachMenu(false);
     if (!file) {
       setUploadingMedia(false);
       return;
@@ -121,7 +125,7 @@ const ChatWindowPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#0c0c0d] font-sans relative">
+    <div className="flex flex-col h-screen bg-[#0c0c0d] font-sans relative w-full md:max-w-2xl lg:max-w-4xl mx-auto border-x border-[#1c1c1e] shadow-2xl">
       <div 
         className="absolute inset-0 opacity-10 pointer-events-none" 
         style={{ backgroundImage: 'url("https://w0.peakpx.com/wallpaper/508/606/HD-wallpaper-whatsapp-dark-backgroun-background-dark-pattern.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', mixBlendMode: 'screen' }}
@@ -138,13 +142,13 @@ const ChatWindowPage = () => {
           </div>
           <span className="text-white text-[17px] font-semibold tracking-wide ml-2 line-clamp-1 max-w-[150px]" onClick={(e) => { e.stopPropagation(); navigate('/contact-info'); }}>{getChatName()}</span>
         </div>
-        <div className="flex gap-5 mr-4">
+        <div className="flex gap-5 mr-4 cursor-pointer">
           <Video size={24} className="text-[#02c754]" strokeWidth={2} />
           <Phone size={24} className="text-[#02c754]" strokeWidth={2} />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar z-0 flex flex-col p-4 gap-2">
+      <div className="flex-1 overflow-y-auto hide-scrollbar z-0 flex flex-col p-4 gap-2 pb-24" onClick={() => setShowAttachMenu(false)}>
         {messages?.map((m, i) => {
           const isSender = m.sender._id === user._id;
           return (
@@ -169,8 +173,33 @@ const ChatWindowPage = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="bg-[#1c1c1e]/95 backdrop-blur-md px-2 py-[10px] pb-8 flex items-end gap-3 z-10 w-full">
-        <button className="text-[#02c754] mb-1"><Plus size={28} strokeWidth={2}/></button>
+      {showAttachMenu && (
+        <div className="absolute bottom-[90px] left-2 bg-[#2c2c2e] p-4 rounded-3xl grid grid-cols-3 gap-6 shadow-2xl z-20 w-[90%] max-w-[320px] mx-auto opacity-100 transition-opacity ease-out transform pointer-events-auto border border-[#3c3c3e]">
+          <div className="flex flex-col items-center gap-1 cursor-pointer hover:scale-105 transition-transform">
+            <div className="w-[50px] h-[50px] bg-[#5a66d1] rounded-full flex items-center justify-center shadow-lg"><FileText size={24} className="text-white" /></div><span className="text-white text-[12px] font-medium">Document</span>
+          </div>
+          <div onClick={() => fileInputRef.current.click()} className="flex flex-col items-center gap-1 cursor-pointer hover:scale-105 transition-transform">
+            <div className="w-[50px] h-[50px] bg-[#b14777] rounded-full flex items-center justify-center shadow-lg"><Camera size={24} className="text-white" /></div><span className="text-white text-[12px] font-medium">Camera</span>
+          </div>
+          <div onClick={() => fileInputRef.current.click()} className="flex flex-col items-center gap-1 cursor-pointer hover:scale-105 transition-transform">
+            <div className="w-[50px] h-[50px] bg-[#9a51d1] rounded-full flex items-center justify-center shadow-lg"><ImageIcon size={24} className="text-white" /></div><span className="text-white text-[12px] font-medium">Gallery</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 cursor-pointer hover:scale-105 transition-transform">
+             <div className="w-[50px] h-[50px] bg-[#e65a39] rounded-full flex items-center justify-center shadow-lg"><Headphones size={24} className="text-white" /></div><span className="text-white text-[12px] font-medium">Audio</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 cursor-pointer hover:scale-105 transition-transform">
+             <div className="w-[50px] h-[50px] bg-[#229955] rounded-full flex items-center justify-center shadow-lg"><MapPin size={24} className="text-white" /></div><span className="text-white text-[12px] font-medium">Location</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 cursor-pointer hover:scale-105 transition-transform">
+             <div className="w-[50px] h-[50px] bg-[#4999d3] rounded-full flex items-center justify-center shadow-lg"><UserSquare2 size={24} className="text-white" /></div><span className="text-white text-[12px] font-medium">Contact</span>
+          </div>
+        </div>
+      )}
+
+      <div className="absolute bottom-0 bg-[#1c1c1e]/95 backdrop-blur-md px-2 py-[10px] pb-8 flex items-end gap-3 z-10 w-full border-t border-[#2c2c2e]">
+        <button onClick={() => setShowAttachMenu(!showAttachMenu)} className={`mb-1 transition-transform ${showAttachMenu ? 'rotate-45 text-[#8e8e93]' : 'text-[#02c754]'}`}>
+          <Plus size={28} strokeWidth={2.5}/>
+        </button>
         <div className="flex-1 bg-[#2c2c2e] rounded-full flex items-center min-h-[36px] px-3 border border-[#3c3c3e]">
           <input 
             type="text" 
@@ -186,12 +215,12 @@ const ChatWindowPage = () => {
         <div className="flex gap-4 items-center mb-1 text-[#02c754]">
           {newMessage.trim() === '' ? (
             <>
-              <IndianRupee size={24} strokeWidth={2} />
+              <IndianRupee size={24} strokeWidth={2} className="cursor-pointer" />
               <div className="relative cursor-pointer" onClick={() => fileInputRef.current.click()}>
                 <Camera size={24} strokeWidth={2} />
                 <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={(e) => handleMediaUpload(e.target.files[0])} />
               </div>
-              <Mic size={24} strokeWidth={2} />
+              <Mic size={24} strokeWidth={2} className="cursor-pointer" />
             </>
           ) : (
             <button onClick={(e) => sendMessage({ type: 'click', preventDefault: () => {} })} className="text-[17px] font-semibold ml-2 border-none">Send</button>

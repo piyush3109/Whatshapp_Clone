@@ -4,7 +4,10 @@
 
 @layer base {
   body {
-    @apply bg-black text-white antialiased font-sans;
+    @apply bg-black text-white antialiased font-sans flex justify-center;
+  }
+  #root {
+    @apply w-full md:max-w-2xl lg:max-w-4xl min-h-screen border-x border-[#2c2c2e] shadow-[0_0_30px_rgba(0,0,0,0.8)] relative;
   }
 }
 
