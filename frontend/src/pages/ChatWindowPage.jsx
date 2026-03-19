@@ -125,7 +125,7 @@ const ChatWindowPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#0c0c0d] font-sans relative w-full md:max-w-2xl lg:max-w-4xl mx-auto border-x border-[#1c1c1e] shadow-2xl">
+    <div className="flex flex-col h-screen bg-[#0c0c0d] font-sans relative w-full">
       <div 
         className="absolute inset-0 opacity-10 pointer-events-none" 
         style={{ backgroundImage: 'url("https://w0.peakpx.com/wallpaper/508/606/HD-wallpaper-whatsapp-dark-backgroun-background-dark-pattern.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', mixBlendMode: 'screen' }}
@@ -153,12 +153,21 @@ const ChatWindowPage = () => {
           const isSender = m.sender._id === user._id;
           return (
             <div key={m._id} className={`flex ${isSender ? 'justify-end' : 'justify-start'} w-full`}>
-              <div className={`relative px-3 py-2 max-w-[85%] ${isSender ? 'bg-[#005c4b] rounded-2xl rounded-tr-md' : 'bg-[#262628] rounded-2xl rounded-tl-md'}`}>
+              <div className={`relative px-[10px] pt-[6px] pb-[4px] min-w-[80px] max-w-[85%] md:max-w-[75%] lg:max-w-[65%] flex flex-col shadow-sm ${isSender ? 'bg-[#005c4b] rounded-2xl rounded-tr-sm' : 'bg-[#262628] rounded-2xl rounded-tl-sm'}`}>
                 {m.type === 'image' && m.fileUrl && (
-                  <img src={m.fileUrl} alt="Media" className="w-[200px] h-[200px] object-cover rounded-xl mb-1 cursor-pointer" />
+                  <img src={m.fileUrl} alt="Media" className="w-[220px] max-w-full h-auto object-cover rounded-xl mb-1 mt-1 cursor-pointer" />
                 )}
-                {m.content && m.content !== '📷 Photo' && <span className="text-white text-[16px] break-words">{m.content}</span>}
-                <span className="text-[#cfd4d6] text-[11px] float-right mt-2 ml-4 relative top-[2px]">{formatTime(m.createdAt)}</span>
+                <div className="flex flex-wrap items-end justify-between gap-x-4">
+                  {m.content && m.content !== '📷 Photo' && (
+                    <span className="text-[#e9edef] text-[15.5px] leading-[1.3] break-words whitespace-pre-wrap mt-0 mb-1" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                      {m.content}
+                    </span>
+                  )}
+                  {/* Pushes the time strictly to the bottom right corner natively */}
+                  <span className="text-[#8696a0] text-[10.5px] font-medium leading-[15px] whitespace-nowrap float-right ml-auto mt-auto relative top-[2px]">
+                    {formatTime(m.createdAt)}
+                  </span>
+                </div>
               </div>
             </div>
           );
