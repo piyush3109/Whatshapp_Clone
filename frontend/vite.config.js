@@ -6,6 +6,12 @@ import { qrcode } from 'vite-plugin-qrcode'
 export default defineConfig({
   plugins: [react(), qrcode()],
   server: {
-    allowedHosts: true
-  }
+    allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+      },
+    },
+  },
 })

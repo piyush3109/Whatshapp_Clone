@@ -5,7 +5,7 @@ import { useStore } from '../store';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 
-const ENDPOINT = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const ENDPOINT = import.meta.env.VITE_API_URL || '';
 var socket;
 
 const ChatWindowPage = () => {

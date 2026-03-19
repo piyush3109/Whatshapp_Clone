@@ -4,7 +4,7 @@ import { useStore } from '../store';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const ENDPOINT = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const ENDPOINT = import.meta.env.VITE_API_URL || '';
 
 const ChatsListPage = () => {
   const { user, chats, setChats, setSelectedChat } = useStore();

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useStore } from '../store';
 import { Search, Plus, MoreVertical, LogOut } from 'lucide-react';
 
-const ENDPOINT = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const ENDPOINT = import.meta.env.VITE_API_URL || '';
 
 const Sidebar = () => {
   const { user, selectedChat, setSelectedChat, chats, setChats, logout } = useStore();
