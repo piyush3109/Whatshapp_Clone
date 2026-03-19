@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MoreHorizontal, Camera, Plus, Search, Archive } from 'lucide-react';
+import { MoreHorizontal, Camera, Plus, Search, Archive, X, User as UserIcon } from 'lucide-react';
 import { useStore } from '../store';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -11,6 +11,11 @@ const ChatsListPage = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
   const navigate = useNavigate();
+
+  // Modal State
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
 
   const fetchChats = async () => {
     try {
@@ -41,21 +46,99 @@ const ChatsListPage = () => {
     navigate(`/chat/${chat._id}`);
   };
 
+  // Generic Button Handlers
+  const handleAlert = (msg) => alert(msg);
+
+  // New Chat Handlers
+  const handleUserSearch = async (query) => {
+    setUserSearch(query);
+    if (!query) return setSearchResults([]);
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.get(`${ENDPOINT}/api/user?search=${query}`, config);
+      setSearchResults(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const accessChat = async (userId) => {
+    try {
+      const config = { headers: { 'Content-type': 'application/json', Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.post(`${ENDPOINT}/api/chat`, { userId }, config);
+      if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
+      setSelectedChat(data);
+      setShowNewChat(false);
+      navigate(`/chat/${data._id}`);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const filters = ['All', 'Unread', 'Favorites', 'Groups'];
 
-  // Filter based on search input
-  const displayChats = search 
-    ? chats?.filter(c => getChatName(user, c)?.toLowerCase().includes(search.toLowerCase())) 
-    : chats;
+  // Filter based on search input and pills
+  let displayChats = chats;
+  if (filter === 'Unread') displayChats = chats?.filter(c => c.unread > 0 || !c.latestMessage?.readBy?.includes(user._id));
+  if (filter === 'Favorites') displayChats = [];
+  if (filter === 'Groups') displayChats = chats?.filter(c => c.isGroupChat);
+  
+  if (search) {
+    displayChats = displayChats?.filter(c => getChatName(user, c)?.toLowerCase().includes(search.toLowerCase()));
+  }
 
   return (
     <div className="bg-black text-white min-h-screen font-sans">
+      
+      {/* New Chat Modal Overlay */}
+      {showNewChat && (
+        <div className="fixed inset-0 z-[100] bg-black md:bg-black/80 flex items-start justify-center pt-10">
+          <div className="bg-[#1c1c1e] w-full h-[90vh] md:w-[400px] md:rounded-xl overflow-hidden flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center p-4 border-b border-[#2c2c2e]">
+              <h2 className="text-[17px] font-semibold text-white">New Chat</h2>
+              <button onClick={() => setShowNewChat(false)} className="bg-[#2c2c2e] p-1.5 rounded-full text-[#8e8e93] hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4 bg-black">
+              <div className="bg-[#2c2c2e] rounded-xl flex items-center px-3 py-2">
+                <Search size={20} className="text-[#8e8e93]" />
+                <input 
+                  type="text" 
+                  autoFocus
+                  placeholder="Search name or email"
+                  className="bg-transparent border-none outline-none text-[16px] text-white ml-2 w-full"
+                  value={userSearch}
+                  onChange={(e) => handleUserSearch(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto hide-scrollbar">
+              {searchResults.map(resUser => (
+                <div key={resUser._id} onClick={() => accessChat(resUser._id)} className="flex items-center gap-3 px-4 py-3 border-b border-[#2c2c2e] hover:bg-[#2c2c2e] cursor-pointer">
+                  <div className="w-[45px] h-[45px] rounded-full overflow-hidden bg-gray-700">
+                    <img src={resUser.pic} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-medium text-[16px]">{resUser.name}</h3>
+                    <span className="text-[#8e8e93] text-[13px]">{resUser.email}</span>
+                  </div>
+                </div>
+              ))}
+              {userSearch && searchResults.length === 0 && <div className="text-center text-[#8e8e93] mt-5">No users found.</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Header Icons */}
       <div className="flex justify-between items-center px-4 pt-14 pb-1">
-        <MoreHorizontal size={28} className="text-white" />
+        <button onClick={() => handleAlert("Options clicked")} className="hover:bg-[#1c1c1e] p-1 rounded-full text-white">
+          <MoreHorizontal size={28} />
+        </button>
         <div className="flex gap-4">
-          <button className="bg-[#1c1c1e] p-[8px] rounded-full"><Camera size={20} className="text-white" /></button>
-          <button className="bg-[#02c754] p-[8px] rounded-full"><Plus size={20} className="text-black" strokeWidth={2.5}/></button>
+          <button onClick={() => handleAlert("Camera clicked")} className="bg-[#1c1c1e] p-[8px] rounded-full hover:bg-[#2c2c2e]"><Camera size={20} className="text-white" /></button>
+          <button onClick={() => setShowNewChat(true)} className="bg-[#02c754] p-[8px] rounded-full hover:bg-[#00a884]"><Plus size={20} className="text-black" strokeWidth={2.5}/></button>
         </div>
       </div>
 
@@ -81,8 +164,8 @@ const ChatsListPage = () => {
             <button 
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-[6px] rounded-full text-[15px] font-medium whitespace-nowrap ${
-                filter === f ? 'bg-[#005c4b] text-[#bfebd8]' : 'bg-[#1c1c1e] text-[#8e8e93]'
+              className={`px-4 py-[6px] rounded-full text-[15px] font-medium whitespace-nowrap transition-colors ${
+                filter === f ? 'bg-[#005c4b] text-[#bfebd8]' : 'bg-[#1c1c1e] text-[#8e8e93] hover:bg-[#2c2c2e]'
               }`}
             >
               {f}
@@ -91,7 +174,7 @@ const ChatsListPage = () => {
         </div>
 
         {/* Archived Row */}
-        <div className="flex items-center justify-between py-3 px-2 border-b border-[#2c2c2e] cursor-pointer mb-2">
+        <div onClick={() => handleAlert("Opening Archived Chats View...")} className="flex items-center justify-between py-3 px-2 border-b border-[#2c2c2e] hover:bg-[#1c1c1e] cursor-pointer mb-2 transition-colors rounded-sm">
           <div className="flex items-center gap-4">
             <Archive size={22} className="text-[#8e8e93]" />
             <span className="text-[17px] font-medium text-white">Archived</span>
@@ -104,7 +187,7 @@ const ChatsListPage = () => {
           {displayChats && displayChats.length > 0 ? displayChats.map((chat) => (
             <div 
               key={chat._id} 
-              className="flex items-center gap-3 py-2 cursor-pointer"
+              className="flex items-center gap-3 py-2 cursor-pointer hover:bg-[#1c1c1e] transition-colors rounded-md -mx-2 px-2"
               onClick={() => openChat(chat)}
             >
               <div className="relative w-[56px] h-[56px] rounded-full p-[2px]">
