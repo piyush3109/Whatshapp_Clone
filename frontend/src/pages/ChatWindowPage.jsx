@@ -14,7 +14,9 @@ const ChatWindowPage = () => {
   const { user, chats, messages, setMessages } = useStore();
   const [newMessage, setNewMessage] = useState('');
   const [socketConnected, setSocketConnected] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   
   const selectedChat = chats?.find(c => c._id === id);
 
@@ -57,14 +59,14 @@ const ChatWindowPage = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = async (e) => {
-    if (e.key === 'Enter' || e.type === 'click') {
-      if (e.type === 'keydown') e.preventDefault();
-      if (!newMessage.trim()) return;
+  const sendMessage = async (e, customPayload = null) => {
+    if ((e && e.key === 'Enter') || (e && e.type === 'click') || customPayload) {
+      if (e && e.type === 'keydown') e.preventDefault();
+      if (!newMessage.trim() && !customPayload) return;
       
       try {
         const config = { headers: { 'Content-type': 'application/json', Authorization: `Bearer ${user.token}` } };
-        const payload = { content: newMessage, chatId: id };
+        const payload = customPayload || { content: newMessage, chatId: id, type: 'text' };
         setNewMessage('');
         const { data } = await axios.post(`${ENDPOINT}/api/message`, payload, config);
         socket.emit('new message', data);
@@ -72,6 +74,38 @@ const ChatWindowPage = () => {
       } catch (error) {
         console.error(error);
       }
+    }
+  };
+
+  const handleMediaUpload = (file) => {
+    setUploadingMedia(true);
+    if (!file) {
+      setUploadingMedia(false);
+      return;
+    }
+    if (file.type === 'image/jpeg' || file.type === 'image/png') {
+      const data = new FormData();
+      data.append('file', file);
+      data.append('upload_preset', 'chat-app');
+      data.append('cloud_name', 'piyush'); 
+      fetch('https://api.cloudinary.com/v1_1/piyush/image/upload', {
+        method: 'post',
+        body: data,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.url) {
+            sendMessage(null, { content: '📷 Photo', fileUrl: data.url, type: 'image', chatId: id });
+          }
+          setUploadingMedia(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setUploadingMedia(false);
+        });
+    } else {
+      alert('Please Select a valid Image!');
+      setUploadingMedia(false);
     }
   };
 
@@ -116,12 +150,22 @@ const ChatWindowPage = () => {
           return (
             <div key={m._id} className={`flex ${isSender ? 'justify-end' : 'justify-start'} w-full`}>
               <div className={`relative px-3 py-2 max-w-[85%] ${isSender ? 'bg-[#005c4b] rounded-2xl rounded-tr-md' : 'bg-[#262628] rounded-2xl rounded-tl-md'}`}>
-                <span className="text-white text-[16px] break-words">{m.content}</span>
+                {m.type === 'image' && m.fileUrl && (
+                  <img src={m.fileUrl} alt="Media" className="w-[200px] h-[200px] object-cover rounded-xl mb-1 cursor-pointer" />
+                )}
+                {m.content && m.content !== '📷 Photo' && <span className="text-white text-[16px] break-words">{m.content}</span>}
                 <span className="text-[#cfd4d6] text-[11px] float-right mt-2 ml-4 relative top-[2px]">{formatTime(m.createdAt)}</span>
               </div>
             </div>
           );
         })}
+        {uploadingMedia && (
+          <div className="flex justify-end w-full">
+            <div className="relative px-3 py-2 max-w-[85%] bg-[#005c4b] rounded-2xl rounded-tr-md opacity-70">
+              <span className="text-white text-[15px] italic">Sending media...</span>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -133,6 +177,8 @@ const ChatWindowPage = () => {
             className="flex-1 bg-transparent border-none outline-none text-white text-[17px] py-1"
             value={newMessage}
             onKeyDown={sendMessage}
+            placeholder={uploadingMedia ? "Uploading..." : ""}
+            disabled={uploadingMedia}
             onChange={(e) => setNewMessage(e.target.value)}
           />
           <Smile size={22} className="text-[#8e8e93]" />
@@ -141,11 +187,14 @@ const ChatWindowPage = () => {
           {newMessage.trim() === '' ? (
             <>
               <IndianRupee size={24} strokeWidth={2} />
-              <Camera size={24} strokeWidth={2} />
+              <div className="relative cursor-pointer" onClick={() => fileInputRef.current.click()}>
+                <Camera size={24} strokeWidth={2} />
+                <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={(e) => handleMediaUpload(e.target.files[0])} />
+              </div>
               <Mic size={24} strokeWidth={2} />
             </>
           ) : (
-            <button onClick={(e) => sendMessage({ type: 'click', preventDefault: () => {} })} className="text-[17px] font-semibold ml-2">Send</button>
+            <button onClick={(e) => sendMessage({ type: 'click', preventDefault: () => {} })} className="text-[17px] font-semibold ml-2 border-none">Send</button>
           )}
         </div>
       </div>

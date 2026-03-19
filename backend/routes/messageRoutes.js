@@ -17,6 +17,8 @@ router.post('/', protect, async (req, res) => {
     sender: req.user._id,
     content: content,
     chat: chatId,
+    type: req.body.type || 'text',
+    fileUrl: req.body.fileUrl || '',
   };
 
   try {

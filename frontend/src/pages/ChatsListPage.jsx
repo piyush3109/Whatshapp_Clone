@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MoreHorizontal, Camera, Plus, Search, Archive, X, User as UserIcon } from 'lucide-react';
+import { MoreHorizontal, Camera, Plus, Search, Archive, X, User as UserIcon, Users } from 'lucide-react';
 import { useStore } from '../store';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -16,6 +16,11 @@ const ChatsListPage = () => {
   const [showNewChat, setShowNewChat] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  
+  // Group State
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [groupName, setGroupName] = useState('');
+  const [selectedGroupUsers, setSelectedGroupUsers] = useState([]);
 
   const fetchChats = async () => {
     try {
@@ -46,10 +51,8 @@ const ChatsListPage = () => {
     navigate(`/chat/${chat._id}`);
   };
 
-  // Generic Button Handlers
   const handleAlert = (msg) => alert(msg);
 
-  // New Chat Handlers
   const handleUserSearch = async (query) => {
     setUserSearch(query);
     if (!query) return setSearchResults([]);
@@ -63,6 +66,15 @@ const ChatsListPage = () => {
   };
 
   const accessChat = async (userId) => {
+    if (isCreatingGroup) {
+      const userToAdd = searchResults.find(u => u._id === userId);
+      if (selectedGroupUsers.includes(userToAdd)) return;
+      setSelectedGroupUsers([...selectedGroupUsers, userToAdd]);
+      setUserSearch('');
+      setSearchResults([]);
+      return;
+    }
+
     try {
       const config = { headers: { 'Content-type': 'application/json', Authorization: `Bearer ${user.token}` } };
       const { data } = await axios.post(`${ENDPOINT}/api/chat`, { userId }, config);
@@ -75,45 +87,80 @@ const ChatsListPage = () => {
     }
   };
 
+  const createGroup = async () => {
+    if (!groupName || selectedGroupUsers.length < 2) {
+      alert("Please provide a group name and select at least 2 users.");
+      return;
+    }
+    try {
+      const config = { headers: { 'Content-type': 'application/json', Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.post(`${ENDPOINT}/api/chat/group`, {
+        name: groupName,
+        users: JSON.stringify(selectedGroupUsers.map((u) => u._id)),
+      }, config);
+      
+      setChats([data, ...chats]);
+      setSelectedChat(data);
+      setShowNewChat(false);
+      setIsCreatingGroup(false);
+      setGroupName('');
+      setSelectedGroupUsers([]);
+      navigate(`/chat/${data._id}`);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const filters = ['All', 'Unread', 'Favorites', 'Groups'];
 
-  // Filter based on search input and pills
   let displayChats = chats;
   if (filter === 'Unread') displayChats = chats?.filter(c => c.unread > 0 || !c.latestMessage?.readBy?.includes(user._id));
   if (filter === 'Favorites') displayChats = [];
   if (filter === 'Groups') displayChats = chats?.filter(c => c.isGroupChat);
-  
-  if (search) {
-    displayChats = displayChats?.filter(c => getChatName(user, c)?.toLowerCase().includes(search.toLowerCase()));
-  }
+  if (search) displayChats = displayChats?.filter(c => getChatName(user, c)?.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="bg-black text-white min-h-screen font-sans">
       
-      {/* New Chat Modal Overlay */}
+      {/* New Chat / Group Overlay */}
       {showNewChat && (
         <div className="fixed inset-0 z-[100] bg-black md:bg-black/80 flex items-start justify-center pt-10">
           <div className="bg-[#1c1c1e] w-full h-[90vh] md:w-[400px] md:rounded-xl overflow-hidden flex flex-col shadow-2xl">
             <div className="flex justify-between items-center p-4 border-b border-[#2c2c2e]">
-              <h2 className="text-[17px] font-semibold text-white">New Chat</h2>
-              <button onClick={() => setShowNewChat(false)} className="bg-[#2c2c2e] p-1.5 rounded-full text-[#8e8e93] hover:text-white">
+              <h2 className="text-[17px] font-semibold text-white">{isCreatingGroup ? 'New Group' : 'New Chat'}</h2>
+              <button onClick={() => { setShowNewChat(false); setIsCreatingGroup(false); setSelectedGroupUsers([]); setGroupName(''); }} className="bg-[#2c2c2e] p-1.5 rounded-full text-[#8e8e93] hover:text-white">
                 <X size={20} />
               </button>
             </div>
-            <div className="p-4 bg-black">
+            
+            <div className="p-4 bg-black flex flex-col gap-3 border-b border-[#1c1c1e]">
+              {!isCreatingGroup ? (
+                <div onClick={() => setIsCreatingGroup(true)} className="flex items-center gap-4 py-2 cursor-pointer hover:bg-[#1c1c1e] transition-colors rounded-lg px-2 -mx-2">
+                  <div className="w-[45px] h-[45px] rounded-full bg-[#2c2c2e] flex items-center justify-center">
+                    <Users size={22} className="text-[#02c754]" />
+                  </div>
+                  <span className="text-[17px] font-semibold text-[#02c754]">New Group</span>
+                </div>
+              ) : (
+                <>
+                  <input type="text" placeholder="Group Subject" className="bg-[#2c2c2e] px-4 py-3 rounded-xl border-none outline-none text-[16px] text-white w-full" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedGroupUsers.map(u => (
+                      <span key={u._id} className="bg-[#02c754] text-black px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
+                        {u.name} <X size={14} className="cursor-pointer" onClick={() => setSelectedGroupUsers(selectedGroupUsers.filter(sel => sel._id !== u._id))} />
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
+
               <div className="bg-[#2c2c2e] rounded-xl flex items-center px-3 py-2">
                 <Search size={20} className="text-[#8e8e93]" />
-                <input 
-                  type="text" 
-                  autoFocus
-                  placeholder="Search name or email"
-                  className="bg-transparent border-none outline-none text-[16px] text-white ml-2 w-full"
-                  value={userSearch}
-                  onChange={(e) => handleUserSearch(e.target.value)}
-                />
+                <input type="text" placeholder={`Search ${isCreatingGroup ? 'friends to add' : 'name or email'}`} className="bg-transparent border-none outline-none text-[16px] text-white ml-2 w-full" value={userSearch} onChange={(e) => handleUserSearch(e.target.value)} />
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto hide-scrollbar">
+
+            <div className="flex-1 overflow-y-auto hide-scrollbar relative">
               {searchResults.map(resUser => (
                 <div key={resUser._id} onClick={() => accessChat(resUser._id)} className="flex items-center gap-3 px-4 py-3 border-b border-[#2c2c2e] hover:bg-[#2c2c2e] cursor-pointer">
                   <div className="w-[45px] h-[45px] rounded-full overflow-hidden bg-gray-700">
@@ -125,8 +172,13 @@ const ChatsListPage = () => {
                   </div>
                 </div>
               ))}
-              {userSearch && searchResults.length === 0 && <div className="text-center text-[#8e8e93] mt-5">No users found.</div>}
             </div>
+
+            {isCreatingGroup && (
+              <div className="p-4 bg-[#1c1c1e] border-t border-[#2c2c2e]">
+                <button onClick={createGroup} className="w-full bg-[#02c754] text-black font-bold py-3 rounded-xl hover:bg-[#00a884] transition-colors">Create Group</button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -206,7 +258,7 @@ const ChatsListPage = () => {
                   </span>
                 </div>
                 <div className="flex justify-between items-center pr-2">
-                  <p className="text-[#8e8e93] text-[15px] line-clamp-1">{chat.latestMessage ? chat.latestMessage.content : 'No messages yet'}</p>
+                  <p className="text-[#8e8e93] text-[15px] line-clamp-1">{chat.latestMessage ? chat.latestMessage.content : (chat.isGroupChat ? 'Group created' : 'No messages yet')}</p>
                 </div>
               </div>
             </div>
