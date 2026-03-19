@@ -4,15 +4,20 @@ import { CircleDashed, Phone, Users, MessageCircle, User } from 'lucide-react';
 import { useStore } from '../store';
 
 const MobileLayout = () => {
-  const { user } = useStore();
+  const { user, chats } = useStore();
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Calculate real unread messages from MongoDB connection stream
+  const unreadChatsCount = chats?.filter(c => 
+    c.unread > 0 || (c.latestMessage && !c.latestMessage?.readBy?.includes(user?._id))
+  )?.length || 0;
+
   const tabs = [
-    { name: 'Updates', path: '/updates', icon: CircleDashed, badge: true },
-    { name: 'Calls', path: '/calls', icon: Phone, badge: 6 },
-    { name: 'Communities', path: '/communities', icon: Users },
-    { name: 'Chats', path: '/chats', icon: MessageCircle, badge: 110 },
+    { name: 'Updates', path: '/updates', icon: CircleDashed, badge: 3 }, // Corresponds to statuses inside UpdatesPage 
+    { name: 'Calls', path: '/calls', icon: Phone, badge: 0 },
+    { name: 'Communities', path: '/communities', icon: Users, badge: 0 },
+    { name: 'Chats', path: '/chats', icon: MessageCircle, badge: unreadChatsCount },
     { name: 'You', path: '/you', icon: User, isAvatar: true },
   ];
 
@@ -47,10 +52,11 @@ const MobileLayout = () => {
                 ) : (
                   <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
                 )}
-                {/* Badge rendering */}
-                {tab.badge && (
-                  <div className={`absolute -top-1 -right-2 bg-[#25d366] text-black text-[10px] font-bold px-[5px] py-[1px] rounded-full border-2 border-black ${tab.badge === true ? 'w-3 h-3 p-0' : ''}`}>
-                    {tab.badge !== true ? tab.badge : ''}
+                
+                {/* Badge rendering natively */}
+                {tab.badge > 0 && (
+                  <div className={`absolute -top-2 -right-3 bg-[#ff3b30] text-white text-[10px] font-bold min-w-[18px] h-[18px] px-[5px] flex items-center justify-center rounded-full border-[2px] border-black shadow-sm`}>
+                    {tab.badge > 99 ? '99+' : tab.badge}
                   </div>
                 )}
               </div>
