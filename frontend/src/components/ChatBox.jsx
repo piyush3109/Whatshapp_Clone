@@ -5,7 +5,7 @@ import { io } from 'socket.io-client';
 import { Send, MoreVertical } from 'lucide-react';
 import Message from './Message';
 
-const ENDPOINT = 'http://localhost:5001';
+const ENDPOINT = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 var socket, selectedChatCompare;
 
 const ChatBox = () => {
@@ -21,7 +21,7 @@ const ChatBox = () => {
 
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.get(`http://localhost:5001/api/message/${selectedChat._id}`, config);
+      const { data } = await axios.get(`${ENDPOINT}/api/message/${selectedChat._id}`, config);
       setMessages(data);
       socket.emit('join chat', selectedChat._id);
     } catch (error) {
@@ -73,7 +73,7 @@ const ChatBox = () => {
       try {
         const config = { headers: { 'Content-type': 'application/json', Authorization: `Bearer ${user.token}` } };
         setNewMessage('');
-        const { data } = await axios.post('http://localhost:5001/api/message', {
+        const { data } = await axios.post(`${ENDPOINT}/api/message`, {
           content: newMessage,
           chatId: selectedChat._id,
         }, config);

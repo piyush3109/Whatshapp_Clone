@@ -18,11 +18,12 @@ const AuthPage = () => {
     
     try {
       const config = { headers: { 'Content-type': 'application/json' } };
+      const ENDPOINT = import.meta.env.VITE_API_URL || 'http://localhost:5001';
       let res;
       if (isLogin) {
-        res = await axios.post('http://localhost:5001/api/user/login', { email, password }, config);
+        res = await axios.post(`${ENDPOINT}/api/user/login`, { email, password }, config);
       } else {
-        res = await axios.post('http://localhost:5001/api/user/register', { name, email, password }, config);
+        res = await axios.post(`${ENDPOINT}/api/user/register`, { name, email, password }, config);
       }
       setUser(res.data);
       navigate('/chats');

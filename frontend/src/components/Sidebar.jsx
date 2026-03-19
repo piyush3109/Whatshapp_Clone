@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useStore } from '../store';
 import { Search, Plus, MoreVertical, LogOut } from 'lucide-react';
 
+const ENDPOINT = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
 const Sidebar = () => {
   const { user, selectedChat, setSelectedChat, chats, setChats, logout } = useStore();
   const [search, setSearch] = useState('');
@@ -15,7 +17,7 @@ const Sidebar = () => {
   const fetchChats = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.get('http://localhost:5001/api/chat', config);
+      const { data } = await axios.get(`${ENDPOINT}/api/chat`, config);
       setChats(data);
     } catch (error) {
       console.error(error);
@@ -35,7 +37,7 @@ const Sidebar = () => {
     try {
       setLoading(true);
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.get(`http://localhost:5001/api/user?search=${query}`, config);
+      const { data } = await axios.get(`${ENDPOINT}/api/user?search=${query}`, config);
       setSearchResults(data);
     } catch (error) {
       console.error(error);
@@ -47,7 +49,7 @@ const Sidebar = () => {
   const accessChat = async (userId) => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post('http://localhost:5001/api/chat', { userId }, config);
+      const { data } = await axios.post(`${ENDPOINT}/api/chat`, { userId }, config);
       if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
       setSelectedChat(data);
       setSearch('');
@@ -72,7 +74,7 @@ const Sidebar = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       const { data } = await axios.post(
-        'http://localhost:5001/api/chat/group',
+        `${ENDPOINT}/api/chat/group`,
         { name: groupName, users: JSON.stringify(selectedUsers.map((u) => u._id)) },
         config
       );
