@@ -1,9 +1,10 @@
 import React from 'react';
 import { MoreHorizontal, Camera, PenLine } from 'lucide-react';
 import { useStore } from '../store';
+import { useNavigate } from 'react-router-dom';
 
-const StatusCard = ({ isUser, name, image, avatar, hasUpdate, isViewed }) => (
-  <div className="relative w-28 h-40 flex-shrink-0 rounded-2xl overflow-hidden cursor-pointer">
+const StatusCard = ({ isUser, name, image, avatar, hasUpdate, isViewed, onClick }) => (
+  <div className="relative w-28 h-40 flex-shrink-0 rounded-2xl overflow-hidden cursor-pointer" onClick={onClick}>
     <img src={image} alt={name} className="w-full h-full object-cover" />
     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
     
@@ -26,8 +27,8 @@ const StatusCard = ({ isUser, name, image, avatar, hasUpdate, isViewed }) => (
   </div>
 );
 
-const ChannelItem = ({ name, message, time, badge, avatar }) => (
-  <div className="flex items-center gap-4 py-3 cursor-pointer">
+const ChannelItem = ({ name, message, time, badge, avatar, onClick }) => (
+  <div className="flex items-center gap-4 py-3 cursor-pointer" onClick={onClick}>
     <img src={avatar} className="w-[52px] h-[52px] rounded-full object-cover" alt={name} />
     <div className="flex-1 border-b border-[#2c2c2e] pb-4">
       <div className="flex justify-between items-center mb-1">
@@ -48,6 +49,7 @@ const ChannelItem = ({ name, message, time, badge, avatar }) => (
 
 const UpdatesPage = () => {
   const { user } = useStore();
+  const navigate = useNavigate();
 
   const statuses = [
     { id: 1, name: 'Anshuman Tiwari', image: 'https://images.unsplash.com/photo-1601412436009-d964bd02edbc?w=400', hasUpdate: true, isViewed: false },
@@ -66,7 +68,7 @@ const UpdatesPage = () => {
     <div className="bg-black text-white min-h-screen pb-20 font-sans">
       {/* Header */}
       <div className="flex justify-between items-center px-4 pt-14 pb-2">
-        <MoreHorizontal size={28} className="text-white" />
+        <MoreHorizontal size={28} className="text-white cursor-pointer hover:bg-[#1c1c1e] rounded-full p-1" onClick={() => navigate('/status/options')} />
       </div>
       
       <div className="px-4">
@@ -76,8 +78,8 @@ const UpdatesPage = () => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-[20px] font-bold">Status</h2>
           <div className="flex gap-4">
-            <button className="bg-[#1c1c1e] p-[10px] rounded-full"><Camera size={18} className="text-white" /></button>
-            <button className="bg-[#1c1c1e] p-[10px] rounded-full"><PenLine size={18} className="text-white" /></button>
+            <button onClick={() => navigate('/status/camera')} className="bg-[#1c1c1e] p-[10px] rounded-full hover:bg-[#2c2c2e]"><Camera size={18} className="text-white" /></button>
+            <button onClick={() => navigate('/status/upload-status')} className="bg-[#1c1c1e] p-[10px] rounded-full hover:bg-[#2c2c2e]"><PenLine size={18} className="text-white" /></button>
           </div>
         </div>
 
@@ -87,6 +89,7 @@ const UpdatesPage = () => {
             isUser={true} 
             name="My status" 
             image={user?.pic || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=400'} 
+            onClick={() => navigate('/status/upload-status')}
           />
           {/* Other Statuses */}
           {statuses.map(s => (
@@ -98,6 +101,7 @@ const UpdatesPage = () => {
               avatar={s.image}
               hasUpdate={s.hasUpdate} 
               isViewed={s.isViewed} 
+              onClick={() => navigate('/status/view-status')}
             />
           ))}
         </div>
@@ -105,14 +109,14 @@ const UpdatesPage = () => {
         {/* Channels Section */}
         <div className="flex justify-between items-center mt-10 mb-4">
           <h2 className="text-[20px] font-bold">Channels</h2>
-          <button className="bg-[#1c1c1e] px-4 py-[6px] rounded-full text-[15px] font-semibold">
+          <button onClick={() => navigate('/status/explore-channels')} className="bg-[#1c1c1e] px-4 py-[6px] rounded-full text-[15px] font-semibold hover:bg-[#2c2c2e]">
             Explore
           </button>
         </div>
 
         <div className="flex flex-col">
           {channels.map(c => (
-            <ChannelItem key={c.id} {...c} />
+            <ChannelItem key={c.id} {...c} onClick={() => navigate(`/status/channel-${c.id}`)} />
           ))}
         </div>
       </div>

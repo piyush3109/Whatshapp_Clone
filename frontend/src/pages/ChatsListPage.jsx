@@ -51,8 +51,6 @@ const ChatsListPage = () => {
     navigate(`/chat/${chat._id}`);
   };
 
-  const handleAlert = (msg) => alert(msg);
-
   const handleUserSearch = async (query) => {
     setUserSearch(query);
     if (!query) return setSearchResults([]);
@@ -185,11 +183,11 @@ const ChatsListPage = () => {
 
       {/* Top Header Icons */}
       <div className="flex justify-between items-center px-4 pt-14 pb-1">
-        <button onClick={() => handleAlert("Options clicked")} className="hover:bg-[#1c1c1e] p-1 rounded-full text-white">
+        <button onClick={() => navigate('/settings/options')} className="hover:bg-[#1c1c1e] p-1 rounded-full text-white">
           <MoreHorizontal size={28} />
         </button>
         <div className="flex gap-4">
-          <button onClick={() => handleAlert("Camera clicked")} className="bg-[#1c1c1e] p-[8px] rounded-full hover:bg-[#2c2c2e]"><Camera size={20} className="text-white" /></button>
+          <button onClick={() => navigate('/camera')} className="bg-[#1c1c1e] p-[8px] rounded-full hover:bg-[#2c2c2e]"><Camera size={20} className="text-white" /></button>
           <button onClick={() => setShowNewChat(true)} className="bg-[#02c754] p-[8px] rounded-full hover:bg-[#00a884]"><Plus size={20} className="text-black" strokeWidth={2.5}/></button>
         </div>
       </div>
@@ -226,7 +224,7 @@ const ChatsListPage = () => {
         </div>
 
         {/* Archived Row */}
-        <div onClick={() => handleAlert("Opening Archived Chats View...")} className="flex items-center justify-between py-3 px-2 border-b border-[#2c2c2e] hover:bg-[#1c1c1e] cursor-pointer mb-2 transition-colors rounded-sm">
+        <div onClick={() => navigate('/archived')} className="flex items-center justify-between py-3 px-2 border-b border-[#2c2c2e] hover:bg-[#1c1c1e] cursor-pointer mb-2 transition-colors rounded-sm">
           <div className="flex items-center gap-4">
             <Archive size={22} className="text-[#8e8e93]" />
             <span className="text-[17px] font-medium text-white">Archived</span>

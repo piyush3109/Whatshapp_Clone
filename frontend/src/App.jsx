@@ -6,6 +6,7 @@ import MobileLayout from './components/MobileLayout';
 import YouPage from './pages/YouPage';
 import UpdatesPage from './pages/UpdatesPage';
 import ContactDetailsPage from './pages/ContactDetailsPage';
+import PlaceholderPage from './pages/PlaceholderPage';
 
 import ChatsListPage from './pages/ChatsListPage';
 import ChatWindowPage from './pages/ChatWindowPage';
@@ -24,14 +25,19 @@ function App() {
           <Route path="/you" element={<YouPage />} />
           
           {/* Fallbacks for currently empty tabs */}
-          <Route path="/calls" element={<div className="flex h-full items-center justify-center text-gray-500">Calls under construction...</div>} />
-          <Route path="/communities" element={<div className="flex h-full items-center justify-center text-gray-500">Communities under construction...</div>} />
+          <Route path="/calls" element={<div className="flex bg-black text-white h-full items-center justify-center">Calls under construction...</div>} />
+          <Route path="/communities" element={<div className="flex bg-black text-white h-full items-center justify-center">Communities under construction...</div>} />
         </Route>
         
-        {/* Detail views (no bottom bar) */}
+        {/* Detail views (no bottom bar) nested generic apps natively */}
         <Route path="/chat/:id" element={<ChatWindowPage />} />
         <Route path="/contact-details" element={<ContactDetailsPage />} />
         <Route path="/contact-info" element={<ContactInfoPage />} />
+        
+        <Route path="/settings/:id" element={<PlaceholderPage />} />
+        <Route path="/status/:id" element={<PlaceholderPage />} />
+        <Route path="/archived" element={<PlaceholderPage />} />
+        <Route path="/camera" element={<PlaceholderPage />} />
       </Routes>
     </Router>
   );
