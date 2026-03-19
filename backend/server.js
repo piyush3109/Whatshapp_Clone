@@ -21,9 +21,10 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/whatsapp-clone');
-    console.log('MongoDB Connected (Local)');
+    console.log('MongoDB Connected successfully!');
   } catch (err) {
-    console.log('Local MongoDB connection failed. Starting in-memory MongoDB fallback...');
+    console.error('MongoDB connection failed:', err.message);
+    console.log('Starting in-memory MongoDB fallback...');
     try {
       const mongoServer = await MongoMemoryServer.create();
       const mongoUri = mongoServer.getUri();
