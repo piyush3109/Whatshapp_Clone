@@ -42,16 +42,29 @@ const ContactInfoPage = () => {
     return selectedChat.users[0]?._id === user?._id ? selectedChat.users[1]?.name : selectedChat.users[0]?.name;
   };
   
-  const getChatEmail = () => {
+  const getChatEmailOrPhone = () => {
     if (!selectedChat) return '';
-    if (selectedChat.isGroupChat) return `Group · ${selectedChat.users.length} participants`;
-    return selectedChat.users[0]?._id === user?._id ? selectedChat.users[1]?.email : selectedChat.users[0]?.email;
+    if (selectedChat.isGroupChat) return `${selectedChat.users.length} participants`;
+    const otherUser = selectedChat.users[0]?._id === user?._id ? selectedChat.users[1] : selectedChat.users[0];
+    return otherUser?.phone || otherUser?.email || '';
+  };
+
+  const getChatAbout = () => {
+    if (!selectedChat || selectedChat.isGroupChat) return '';
+    const otherUser = selectedChat.users[0]?._id === user?._id ? selectedChat.users[1] : selectedChat.users[0];
+    return otherUser?.about || 'Hey there! I am using WhatsApp.';
   };
   
   const getChatAvatar = () => {
     if (!selectedChat) return 'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg';
     if (selectedChat.isGroupChat) return 'https://icon-library.com/images/group-icon-png/group-icon-png-15.jpg';
     return selectedChat.users[0]?._id === user?._id ? selectedChat.users[1]?.pic : selectedChat.users[0]?.pic;
+  };
+
+  const isOtherUserOnline = () => {
+    if (!selectedChat || selectedChat.isGroupChat) return false;
+    const otherUser = selectedChat.users[0]?._id === user?._id ? selectedChat.users[1] : selectedChat.users[0];
+    return otherUser?.isOnline;
   };
 
   return (
@@ -66,11 +79,17 @@ const ContactInfoPage = () => {
       </div>
 
       <div className="flex flex-col items-center mt-4">
-        <div className="w-28 h-28 rounded-full flex items-center justify-center mb-4 overflow-hidden border border-[#2c2c2e]">
-          <img src={getChatAvatar()} alt="Profile" className="w-full h-full object-cover" />
+        <div className="relative">
+          <div className="w-28 h-28 rounded-full flex items-center justify-center mb-4 overflow-hidden border border-[#2c2c2e]">
+            <img src={getChatAvatar()} alt="Profile" className="w-full h-full object-cover" />
+          </div>
+          {isOtherUserOnline() && (
+            <div className="absolute bottom-5 right-2 w-5 h-5 bg-[#25d366] rounded-full border-2 border-black"></div>
+          )}
         </div>
         <h1 className="text-[24px] font-bold text-center px-4">{getChatName()}</h1>
-        <p className="text-[#8e8e93] text-[15px] mt-1 text-center px-4">{getChatEmail()}</p>
+        <p className="text-[#8e8e93] text-[15px] mt-1 text-center px-4">{getChatEmailOrPhone()}</p>
+        <p className="text-[#e9edef] text-[15px] mt-1 italic text-center px-6 opacity-70">"{getChatAbout()}"</p>
       </div>
 
       <div className="px-4 mt-6">
