@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Video, Phone, Plus, Camera, Mic, IndianRupee, Smile, Image as ImageIcon, FileText, MapPin, UserSquare2, Headphones } from 'lucide-react';
+import { ChevronLeft, Video, Phone, Plus, Camera, Mic, IndianRupee, Smile, Image as ImageIcon, FileText, MapPin, UserSquare2, Headphones, X, Send } from 'lucide-react';
 import { useStore } from '../store';
 import axios from 'axios';
 import { io } from 'socket.io-client';
@@ -25,22 +25,26 @@ const ChatWindowPage = () => {
   
   const selectedChat = chats?.find(c => c._id === id);
 
+  const [previewFile, setPreviewFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewType, setPreviewType] = useState(null);
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
       const chunks = [];
       recorder.ondataavailable = (e) => chunks.push(e.data);
-      recorder.onstop = async () => {
+      recorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'audio/webm' });
-        // Upload to Cloudinary as voice note
-        uploadMedia(blob, 'voice');
+        setPreviewFile(blob);
+        setPreviewUrl(URL.createObjectURL(blob));
+        setPreviewType('voice');
       };
       recorder.start();
       setMediaRecorder(recorder);
       setIsRecording(true);
     } catch (err) {
-      console.error("Error accessing microphone:", err);
       alert("Microphone access denied!");
     }
   };
@@ -53,29 +57,48 @@ const ChatWindowPage = () => {
     }
   };
 
-  const uploadMedia = (file, type = 'image') => {
+  const uploadMedia = async () => {
+    if (!previewFile) return;
     setUploadingMedia(true);
     const data = new FormData();
-    data.append('file', file);
+    data.append('file', previewFile);
     data.append('upload_preset', 'chat-app');
-    data.append('cloud_name', 'piyush'); 
     
-    fetch('https://api.cloudinary.com/v1_1/piyush/upload', { // Cloudinary generic upload endpoint
-      method: 'post',
-      body: data,
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.url) {
-          const content = type === 'image' ? '📷 Photo' : '🎤 Voice Note';
-          sendMessage(null, { content, fileUrl: data.url, type: type === 'voice' ? 'audio' : 'image', chatId: id });
-        }
-        setUploadingMedia(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setUploadingMedia(false);
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/piyush/upload`, {
+        method: 'post',
+        body: data,
       });
+      const result = await res.json();
+      if (result.secure_url) {
+        const content = previewType === 'image' ? '📷 Photo' : '🎤 Voice Note';
+        await sendMessage(null, { 
+          content, 
+          fileUrl: result.secure_url, 
+          type: previewType === 'voice' ? 'audio' : 'image', 
+          chatId: id 
+        });
+        cancelPreview();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
+
+  const handleMediaSelect = (file) => {
+    if (!file) return;
+    setPreviewFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setPreviewType('image');
+    setShowAttachMenu(false);
+  };
+
+  const cancelPreview = () => {
+    setPreviewFile(null);
+    setPreviewUrl(null);
+    setPreviewType(null);
   };
 
   useEffect(() => {
@@ -370,7 +393,7 @@ const ChatWindowPage = () => {
               <IndianRupee size={24} strokeWidth={2} className="cursor-pointer" />
               <div className="relative cursor-pointer" onClick={() => fileInputRef.current.click()}>
                 <Camera size={24} strokeWidth={2} />
-                <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={(e) => uploadMedia(e.target.files[0])} />
+                <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={(e) => handleMediaSelect(e.target.files[0])} />
               </div>
               <div 
                 onMouseDown={startRecording} onMouseUp={stopRecording}
@@ -385,6 +408,45 @@ const ChatWindowPage = () => {
           )}
         </div>
       </div>
+
+      {/* Media Preview Modal */}
+      {previewUrl && (
+        <div className="fixed inset-0 bg-black z-[100] flex flex-col animate-fade-in">
+          <div className="p-4 flex justify-between items-center bg-black/50 backdrop-blur-md">
+            <button onClick={cancelPreview} className="text-white"><X size={30} /></button>
+            <span className="text-white font-semibold text-lg">{previewType === 'image' ? 'Preview Photo' : 'Preview Voice Note'}</span>
+            <div className="w-8" />
+          </div>
+          
+          <div className="flex-1 flex items-center justify-center p-4">
+            {previewType === 'image' ? (
+              <img src={previewUrl} className="max-w-full max-h-[80vh] rounded-lg shadow-2xl object-contain" alt="Preview" />
+            ) : (
+              <div className="bg-[#1c1c1e] p-8 rounded-3xl w-full max-w-md flex flex-col items-center gap-6 shadow-2xl border border-[#2c2c2e]">
+                <div className="w-20 h-20 bg-[#02c754] rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                  <Mic size={40} className="text-black" />
+                </div>
+                <audio src={previewUrl} controls className="w-full grayscale invert opacity-80" />
+                <p className="text-[#8e8e93] text-sm">Review your voice note before sending</p>
+              </div>
+            )}
+          </div>
+
+          <div className="p-6 bg-black/50 flex justify-center pb-12">
+            <button 
+              onClick={uploadMedia}
+              disabled={uploadingMedia}
+              className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all ${uploadingMedia ? 'bg-[#1c1c1e] scale-90' : 'bg-[#02c754] hover:scale-110 active:scale-95'}`}
+            >
+              {uploadingMedia ? (
+                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                <Send size={30} className="text-black ml-1" />
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
