@@ -1,98 +1,208 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, SafeAreaView, TextInput, RefreshControl } from 'react-native';
+import { useStore } from '../../store';
+import axios from 'axios';
+import { useRouter } from 'expo-router';
+import { LucideCamera, LucidePlus, LucideSearch, LucideMoreHorizontal } from 'lucide-react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const BACKEND_URL = 'http://10.227.176.245:5001';
 
-export default function HomeScreen() {
+export default function ChatsScreen() {
+  const { user, chats, setChats, setSelectedChat }: any = useStore();
+  const [search, setSearch] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const router = useRouter();
+
+  const fetchChats = async () => {
+    if (!user?.token) return;
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.get(`${BACKEND_URL}/api/chat`, config);
+      setChats(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchChats();
+  }, [user]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchChats();
+    setRefreshing(false);
+  };
+
+  const openChat = (chat: any) => {
+    setSelectedChat(chat);
+    router.push({ pathname: '/chat/[id]', params: { id: chat._id } });
+  };
+
+  const getChatName = (chat: any) => {
+    if (chat.isGroupChat) return chat.chatName;
+    return chat.users[0]?._id === user?._id ? chat.users[1]?.name : chat.users[0]?.name;
+  };
+
+  const getChatPic = (chat: any) => {
+    if (chat.isGroupChat) return 'https://icon-library.com/images/group-icon-png/group-icon-png-15.jpg';
+    return chat.users[0]?._id === user?._id ? chat.users[1]?.pic : chat.users[0]?.pic;
+  };
+
+  const filteredChats = chats?.filter((c: any) =>
+    getChatName(c)?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const renderItem = ({ item }: { item: any }) => (
+    <TouchableOpacity style={styles.chatRow} onPress={() => openChat(item)}>
+      <Image source={{ uri: getChatPic(item) }} style={styles.avatar} />
+      <View style={styles.chatInfo}>
+        <View style={styles.chatHeader}>
+          <Text style={styles.chatName}>{getChatName(item)}</Text>
+          <Text style={styles.chatTime}>
+            {item.latestMessage ? new Date(item.latestMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+          </Text>
+        </View>
+        <Text style={styles.chatMessage} numberOfLines={1}>
+          {item.latestMessage ? item.latestMessage.content : 'No messages yet'}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.headerBtn}>
+          <LucideMoreHorizontal color="#fff" size={24} />
+        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.headerBtn}>
+            <LucideCamera color="#fff" size={24} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.headerBtn, styles.plusBtn]}>
+            <LucidePlus color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <Text style={styles.title}>Chats</Text>
+
+      <View style={styles.searchContainer}>
+        <LucideSearch color="#8e8e93" size={18} />
+        <TextInput
+          placeholder="Search"
+          placeholderTextColor="#8e8e93"
+          style={styles.searchInput}
+          value={search}
+          onChangeText={setSearch}
+        />
+      </View>
+
+      <FlatList
+        data={filteredChats}
+        keyExtractor={(item) => item._id}
+        renderItem={renderItem}
+        contentContainerStyle={styles.list}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#25d366" />}
+        ListEmptyComponent={<Text style={styles.emptyText}>No chats found yet.</Text>}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    alignItems: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: 15,
+  },
+  headerBtn: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#1c1c1e',
+  },
+  plusBtn: {
+    backgroundColor: '#25d366',
+  },
+  title: {
+    fontSize: 34,
+    fontWeight: 'bold',
+    color: '#fff',
+    paddingHorizontal: 16,
+    marginVertical: 10,
+  },
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    backgroundColor: '#1c1c1e',
+    marginHorizontal: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginBottom: 15,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  searchInput: {
+    flex: 1,
+    color: '#fff',
+    marginLeft: 10,
+    fontSize: 16,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  list: {
+    paddingBottom: 20,
+  },
+  chatRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#333',
+  },
+  chatInfo: {
+    flex: 1,
+    marginLeft: 15,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#2c2c2e',
+    paddingBottom: 12,
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  chatName: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  chatTime: {
+    fontSize: 14,
+    color: '#8e8e93',
+  },
+  chatMessage: {
+    fontSize: 15,
+    color: '#8e8e93',
+  },
+  emptyText: {
+    color: '#8e8e93',
+    textAlign: 'center',
+    marginTop: 50,
+    fontSize: 16,
   },
 });
