@@ -182,7 +182,7 @@ const ChatsListPage = () => {
       )}
 
       {/* Top Header Icons */}
-      <div className="flex justify-between items-center px-4 pt-14 pb-1">
+      <div className="flex justify-between items-center px-4 pt-1 pb-1">
         <button onClick={() => navigate('/settings/options')} className="hover:bg-[#1c1c1e] p-1 rounded-full text-white">
           <MoreHorizontal size={28} />
         </button>

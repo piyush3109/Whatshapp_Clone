@@ -182,6 +182,11 @@ const ChatWindowPage = () => {
     return selectedChat.users[0]?._id === user?._id ? selectedChat.users[1]?.name : selectedChat.users[0]?.name;
   };
 
+  const formatTime = (dateString) => {
+    const options = { hour: 'numeric', minute: 'numeric', hour12: true };
+    return new Date(dateString).toLocaleTimeString([], options);
+  };
+
   const handleForward = async (message) => {
     const targetChatName = prompt("Enter Chat Name to forward to (Group or User Name):");
     if (!targetChatName) return;
