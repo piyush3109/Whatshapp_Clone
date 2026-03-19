@@ -41,17 +41,12 @@ const ChatsListPage = () => {
     navigate(`/chat/${chat._id}`);
   };
 
-  const filters = ['All', 'Unread 110', 'Favorites', 'Groups 23'];
+  const filters = ['All', 'Unread', 'Favorites', 'Groups'];
 
-  // Dummy chats to make it look exactly like image 1
-  const dummyChats = [
-    { _id: '1', name: 'Sarvesh Pandey 5', time: '8:40 AM', unread: 1, message: '📷 Photo', pic: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36', greenRing: true },
-    { _id: '2', name: '3B("Java Training")', time: 'Yesterday', unread: 2, message: '~Ayush Tripathi: https://forms.gle/...', pic: 'https://cdn-icons-png.flaticon.com/512/226/226777.png' },
-    { _id: '3', name: 'Rudra Tripathi Uturi', time: 'Yesterday', unread: 0, message: '📷 Photo', pic: 'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg' },
-    { _id: '4', name: 'LIC RAJ KUMAR', time: 'Yesterday', unread: 8, message: 'Raj: 📷 Photo', pic: 'https://cdn-icons-png.flaticon.com/512/4744/4744315.png' },
-    { _id: '5', name: '+91 99195 45783', time: 'Yesterday', unread: 0, message: 'सब महादेव मय है सब महादेव में है 🙏', pic: 'https://images.unsplash.com/photo-1542044896530-05d3c054e274' },
-    { _id: '6', name: 'Headphone Zone', time: 'Yesterday', unread: 0, message: 'Hi Krishna, We have your order...', pic: 'https://icon-library.com/images/group-icon-png/group-icon-png-15.jpg', blueRing: true },
-  ];
+  // Filter based on search input
+  const displayChats = search 
+    ? chats?.filter(c => getChatName(user, c)?.toLowerCase().includes(search.toLowerCase())) 
+    : chats;
 
   return (
     <div className="bg-black text-white min-h-screen font-sans">
@@ -101,22 +96,20 @@ const ChatsListPage = () => {
             <Archive size={22} className="text-[#8e8e93]" />
             <span className="text-[17px] font-medium text-white">Archived</span>
           </div>
-          <span className="text-[15px] text-[#8e8e93]">37</span>
+          <span className="text-[15px] text-[#8e8e93]">0</span>
         </div>
 
         {/* Chats List */}
-        <div className="flex flex-col">
-          {(search ? chats : dummyChats).map((chat) => (
+        <div className="flex flex-col pb-24">
+          {displayChats && displayChats.length > 0 ? displayChats.map((chat) => (
             <div 
               key={chat._id} 
               className="flex items-center gap-3 py-2 cursor-pointer"
               onClick={() => openChat(chat)}
             >
-              <div className={`relative w-[56px] h-[56px] rounded-full p-[2px] 
-                ${chat.greenRing ? 'ring-[2.5px] ring-[#02c754]' : ''} 
-                ${chat.blueRing ? 'ring-[2.5px] ring-[#3b82f6]' : ''}`}>
+              <div className="relative w-[56px] h-[56px] rounded-full p-[2px]">
                 <img 
-                  src={chat.pic || getChatPic(user, chat)} 
+                  src={getChatPic(user, chat) || 'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg'} 
                   alt="" 
                   className="w-full h-full rounded-full object-cover"
                 />
@@ -124,22 +117,19 @@ const ChatsListPage = () => {
               
               <div className="flex-1 border-b border-[#2c2c2e] pb-3 ml-1">
                 <div className="flex justify-between items-center mb-[2px]">
-                  <h3 className="text-white font-semibold text-[17px]">{chat.name || getChatName(user, chat)}</h3>
-                  <span className={`text-[14px] ${chat.unread > 0 ? 'text-[#02c754]' : 'text-[#8e8e93]'}`}>
-                    {chat.time || "Yesterday"}
+                  <h3 className="text-white font-semibold text-[17px] line-clamp-1 pr-4">{getChatName(user, chat)}</h3>
+                  <span className={`text-[14px] flex-shrink-0 text-[#8e8e93]`}>
+                    {new Date(chat.updatedAt).toLocaleDateString()}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pr-2">
-                  <p className="text-[#8e8e93] text-[15px] line-clamp-1">{chat.message || (chat.latestMessage ? chat.latestMessage.content : '')}</p>
-                  {chat.unread > 0 && (
-                    <div className="bg-[#02c754] text-black text-[13px] font-semibold flex items-center justify-center w-[20px] h-[20px] rounded-full">
-                      {chat.unread}
-                    </div>
-                  )}
+                  <p className="text-[#8e8e93] text-[15px] line-clamp-1">{chat.latestMessage ? chat.latestMessage.content : 'No messages yet'}</p>
                 </div>
               </div>
             </div>
-          ))}
+          )) : (
+            <div className="text-center text-[#8e8e93] py-10">No recent chats completely.</div>
+          )}
         </div>
       </div>
     </div>
