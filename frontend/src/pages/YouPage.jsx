@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, QrCode, ChevronRight, UserCircle2, ListMinus, Megaphone, Star, Laptop, KeyRound, Lock, MessageCircle, Bell, CreditCard, ArrowDownUp, HelpCircle, UserPlus, Instagram, Facebook } from 'lucide-react';
+import { Search, QrCode, ChevronRight, UserCircle2, ListMinus, Megaphone, Star, Laptop, KeyRound, Lock, MessageCircle, Bell, CreditCard, ArrowDownUp, HelpCircle, UserPlus, Instagram, Facebook, LogOut } from 'lucide-react';
 import { useStore } from '../store';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,13 +14,18 @@ const SettingItem = ({ icon: Icon, title, noBorder, onClick }) => (
 );
 
 const YouPage = () => {
-  const { user } = useStore();
+  const { user, setUser } = useStore();
   const navigate = useNavigate();
 
   const handleNavigate = (featureStr) => {
-    // Converts "Broadcast messages" into "broadcast-messages" for clean routing
     const formattedRoute = featureStr.toLowerCase().replace(/\s+/g, '-');
     navigate(`/settings/${formattedRoute}`);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('userInfo');
+    setUser(null);
+    navigate('/');
   };
 
   return (
@@ -96,7 +101,7 @@ const YouPage = () => {
         </div>
 
         {/* Section 5: Also from Meta */}
-        <div className="rounded-xl bg-[#1c1c1e] p-4 mb-20">
+        <div className="rounded-xl bg-[#1c1c1e] p-4 mb-8">
           <h3 className="text-[#8e8e93] text-[15px] mb-4">Also from Meta</h3>
           <div className="flex justify-between px-2">
             <div className="flex flex-col items-center gap-2 cursor-pointer" onClick={() => handleNavigate("Instagram")}>
@@ -125,6 +130,15 @@ const YouPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Section 6: Log Out */}
+        <div onClick={handleLogout} className="rounded-xl flex items-center justify-between px-4 py-3 mb-24 bg-[#1c1c1e] cursor-pointer hover:bg-[#2c2c2e] transition-colors">
+          <div className="flex items-center gap-4">
+            <LogOut size={24} className="text-[#ff3b30] font-light" strokeWidth={1.5} />
+            <span className="text-[#ff3b30] text-[17px] font-semibold tracking-wide">Log Out</span>
+          </div>
+        </div>
+
       </div>
     </div>
   );
