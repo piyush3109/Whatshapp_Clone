@@ -125,7 +125,7 @@ const ChatWindowPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#0c0c0d] font-sans relative w-full">
+    <div className="flex flex-col h-[100dvh] bg-[#0c0c0d] font-sans relative w-full overflow-hidden">
       <div 
         className="absolute inset-0 opacity-10 pointer-events-none" 
         style={{ backgroundImage: 'url("https://w0.peakpx.com/wallpaper/508/606/HD-wallpaper-whatsapp-dark-backgroun-background-dark-pattern.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', mixBlendMode: 'screen' }}
@@ -140,7 +140,7 @@ const ChatWindowPage = () => {
                <img src={selectedChat?.isGroupChat ? 'https://icon-library.com/images/group-icon-png/group-icon-png-15.jpg' : (selectedChat?.users[0]?._id === user?._id ? selectedChat?.users[1]?.pic : selectedChat?.users[0]?.pic) || 'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg'} alt="Avatar" className="w-full h-full object-cover" />
             </div>
           </div>
-          <span className="text-white text-[17px] font-semibold tracking-wide ml-2 line-clamp-1 max-w-[150px]" onClick={(e) => { e.stopPropagation(); navigate('/contact-info'); }}>{getChatName()}</span>
+          <span className="text-white text-[17px] font-semibold tracking-wide ml-2 line-clamp-1 max-w-[150px]" onClick={(e) => { e.stopPropagation(); navigate('/contact-info/' + id); }}>{getChatName()}</span>
         </div>
         <div className="flex gap-5 mr-4 cursor-pointer">
           <Video size={24} className="text-[#02c754]" strokeWidth={2} />
@@ -148,7 +148,7 @@ const ChatWindowPage = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar z-0 flex flex-col p-4 gap-2 pb-24" onClick={() => setShowAttachMenu(false)}>
+      <div className="flex-1 overflow-y-auto hide-scrollbar flex flex-col p-4 gap-2">
         {messages?.map((m, i) => {
           const isSender = m.sender._id === user._id;
           return (
@@ -159,7 +159,7 @@ const ChatWindowPage = () => {
                 )}
                 <div className="flex flex-wrap items-end justify-between gap-x-4">
                   {m.content && m.content !== '📷 Photo' && (
-                    <span className="text-[#e9edef] text-[15.5px] leading-[1.3] break-words whitespace-pre-wrap mt-0 mb-1" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                    <span className="text-[#e9edef] text-[15.5px] leading-[1.3] break-words whitespace-pre-wrap mt-0 mb-1 flex-1 min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                       {m.content}
                     </span>
                   )}
@@ -205,23 +205,25 @@ const ChatWindowPage = () => {
         </div>
       )}
 
-      <div className="absolute bottom-0 bg-[#1c1c1e]/95 backdrop-blur-md px-2 py-[10px] pb-8 flex items-end gap-3 z-10 w-full border-t border-[#2c2c2e]">
-        <button onClick={() => setShowAttachMenu(!showAttachMenu)} className={`mb-1 transition-transform ${showAttachMenu ? 'rotate-45 text-[#8e8e93]' : 'text-[#02c754]'}`}>
+      {/* Input container: `shrink-0` to avoid keyboard scroll-off, and strictly no absolute positioning so it acts cohesively with [100dvh] */}
+      <div className="shrink-0 bg-[#1c1c1e]/95 backdrop-blur-md px-2 py-2 flex items-end gap-3 z-10 w-full border-t border-[#2c2c2e]">
+        <button onClick={() => setShowAttachMenu(!showAttachMenu)} className={`mb-1 transition-transform shrink-0 ${showAttachMenu ? 'rotate-45 text-[#8e8e93]' : 'text-[#02c754]'}`}>
           <Plus size={28} strokeWidth={2.5}/>
         </button>
-        <div className="flex-1 bg-[#2c2c2e] rounded-full flex items-center min-h-[36px] px-3 border border-[#3c3c3e]">
+        {/* min-w-0 prevents extreme input lengths pushing out icons */}
+        <div className="flex-1 min-w-0 bg-[#2c2c2e] rounded-3xl flex items-center px-3 border border-[#3c3c3e]">
           <input 
             type="text" 
-            className="flex-1 bg-transparent border-none outline-none text-white text-[17px] py-1"
+            className="flex-1 min-w-0 bg-transparent border-none outline-none text-white text-[17px] py-1.5 leading-snug break-words"
             value={newMessage}
             onKeyDown={sendMessage}
-            placeholder={uploadingMedia ? "Uploading..." : ""}
+            placeholder={uploadingMedia ? "Uploading..." : "Message"}
             disabled={uploadingMedia}
             onChange={(e) => setNewMessage(e.target.value)}
           />
-          <Smile size={22} className="text-[#8e8e93]" />
+          <Smile size={22} className="text-[#8e8e93] shrink-0" />
         </div>
-        <div className="flex gap-4 items-center mb-1 text-[#02c754]">
+        <div className="flex gap-4 items-center mb-1 text-[#02c754] shrink-0">
           {newMessage.trim() === '' ? (
             <>
               <IndianRupee size={24} strokeWidth={2} className="cursor-pointer" />
@@ -232,7 +234,7 @@ const ChatWindowPage = () => {
               <Mic size={24} strokeWidth={2} className="cursor-pointer" />
             </>
           ) : (
-            <button onClick={(e) => sendMessage({ type: 'click', preventDefault: () => {} })} className="text-[17px] font-semibold ml-2 border-none">Send</button>
+            <button onClick={(e) => sendMessage({ type: 'click', preventDefault: () => {} })} className="text-[17px] font-semibold ml-2 border-none shrink-0">Send</button>
           )}
         </div>
       </div>

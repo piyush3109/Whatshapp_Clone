@@ -32,7 +32,7 @@ function App() {
         {/* Detail views (no bottom bar) nested generic apps natively */}
         <Route path="/chat/:id" element={<ChatWindowPage />} />
         <Route path="/contact-details" element={<ContactDetailsPage />} />
-        <Route path="/contact-info" element={<ContactInfoPage />} />
+        <Route path="/contact-info/:id" element={<ContactInfoPage />} />
         
         <Route path="/settings/:id" element={<PlaceholderPage />} />
         <Route path="/status/:id" element={<PlaceholderPage />} />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronLeft, Phone, Video, IndianRupee, Search, Image as ImageIcon, HardDrive, Star, Bell, Palette, Download, Clock, Lock, Shield } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useStore } from '../store';
 
 const ActionButton = ({ icon: Icon, label }) => (
   <div className="flex flex-col items-center justify-center bg-[#1c1c1e] rounded-xl w-[72px] h-[72px] gap-1 cursor-pointer">
@@ -30,6 +31,28 @@ const ListItem = ({ icon: Icon, title, rightText, noBorder, isToggle }) => (
 
 const ContactInfoPage = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const { chats, user } = useStore();
+  
+  const selectedChat = chats?.find(c => c._id === id);
+
+  const getChatName = () => {
+    if (!selectedChat) return 'Loading...';
+    if (selectedChat.isGroupChat) return selectedChat.chatName;
+    return selectedChat.users[0]?._id === user?._id ? selectedChat.users[1]?.name : selectedChat.users[0]?.name;
+  };
+  
+  const getChatEmail = () => {
+    if (!selectedChat) return '';
+    if (selectedChat.isGroupChat) return `Group · ${selectedChat.users.length} participants`;
+    return selectedChat.users[0]?._id === user?._id ? selectedChat.users[1]?.email : selectedChat.users[0]?.email;
+  };
+  
+  const getChatAvatar = () => {
+    if (!selectedChat) return 'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg';
+    if (selectedChat.isGroupChat) return 'https://icon-library.com/images/group-icon-png/group-icon-png-15.jpg';
+    return selectedChat.users[0]?._id === user?._id ? selectedChat.users[1]?.pic : selectedChat.users[0]?.pic;
+  };
 
   return (
     <div className="bg-black text-white min-h-screen font-sans pb-10">
@@ -38,16 +61,16 @@ const ContactInfoPage = () => {
         <button onClick={() => navigate(-1)} className="flex items-center text-[#e9edef]">
           <ChevronLeft size={28} strokeWidth={2} />
         </button>
-        <span className="text-[17px] font-semibold tracking-wide">Contact info</span>
+        <span className="text-[17px] font-semibold tracking-wide">{selectedChat?.isGroupChat ? 'Group info' : 'Contact info'}</span>
         <button className="text-[#e9edef] text-[17px] font-medium mr-2">Edit</button>
       </div>
 
       <div className="flex flex-col items-center mt-4">
-        <div className="w-28 h-28 rounded-full bg-[#185536] flex items-center justify-center mb-4 overflow-hidden">
-          <svg viewBox="0 0 24 24" fill="#6df480" className="w-[50px] h-[50px] mt-2"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        <div className="w-28 h-28 rounded-full flex items-center justify-center mb-4 overflow-hidden border border-[#2c2c2e]">
+          <img src={getChatAvatar()} alt="Profile" className="w-full h-full object-cover" />
         </div>
-        <h1 className="text-[24px] font-bold">Krishna Beta</h1>
-        <p className="text-[#8e8e93] text-[15px] mt-1">+91 82107 63241</p>
+        <h1 className="text-[24px] font-bold text-center px-4">{getChatName()}</h1>
+        <p className="text-[#8e8e93] text-[15px] mt-1 text-center px-4">{getChatEmail()}</p>
       </div>
 
       <div className="px-4 mt-6">
